@@ -5,7 +5,7 @@
 # pull request on our GitHub repository:
 #     https://github.com/kaczmarj/neurodocker
 #
-# Timestamp: 2017-08-08 23:28:27
+# Timestamp: 2017-08-10 04:35:59
 
 FROM neurodebian:stretch-non-free
 
@@ -29,7 +29,14 @@ RUN apt-get update -qq && apt-get install -yq --no-install-recommends  \
     && chmod -R 777 /neurodocker && chmod a+s /neurodocker
 ENTRYPOINT ["/neurodocker/startup.sh"]
 
-RUN apt-get update -qq && apt-get install -yq --no-install-recommends tree git-annex-standalone vim emacs-nox nano less ncdu tig git-annex-remote-rclone \
+RUN apt-get update -qq && apt-get install -yq --no-install-recommends tree git-annex-standalone vim emacs-nox nano less ncdu tig git-annex-remote-rclone xvfb \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# User-defined instruction
+RUN curl -sL https://deb.nodesource.com/setup_6.x | bash -
+
+RUN apt-get update -qq && apt-get install -yq --no-install-recommends nodejs \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
@@ -57,8 +64,8 @@ RUN echo "Downloading Miniconda installer ..." \
 #-------------------------
 # Create conda environment
 #-------------------------
-RUN conda create -y -q --name neuro python=3.6 \
-    	jupyter jupyterlab traits pandas matplotlib scikit-learn seaborn altair \
+RUN conda create -y -q --name neuro python=3.5 \
+    	jupyter jupyterlab pandas matplotlib scikit-learn seaborn altair traitsui apptools configobj \
     && conda clean -tipsy \
     && /bin/bash -c "source activate neuro \
     	&& pip install -q --no-cache-dir \
@@ -66,6 +73,14 @@ RUN conda create -y -q --name neuro python=3.6 \
     && find /opt/conda -name ".wh*" -exec rm {} +
 ENV PATH=/opt/conda/envs/neuro/bin:$PATH
 
+# User-defined instruction
+RUN bash -c "source activate neuro && conda install -c menpo mayavi" 
+
+# User-defined instruction
+RUN bash -c "source activate neuro && pip install --pre --upgrade ipywidgets ipyvolume " 
+
+# User-defined instruction
+RUN bash -c "source activate neuro && pip install  --upgrade https://github.com/maartenbreddels/ipyvolume/archive/master.zip && jupyter nbextension install --py --symlink --user ipyvolume && jupyter nbextension enable ipyvolume --user --py" 
+
 WORKDIR /home/neuro
 
-EXPOSE 8888
