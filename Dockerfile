@@ -5,7 +5,7 @@
 # pull request on our GitHub repository:
 #     https://github.com/kaczmarj/neurodocker
 #
-# Timestamp: 2017-08-10 04:35:59
+# Timestamp: 2017-08-14 20:18:30
 
 FROM neurodebian:stretch-non-free
 
@@ -29,16 +29,22 @@ RUN apt-get update -qq && apt-get install -yq --no-install-recommends  \
     && chmod -R 777 /neurodocker && chmod a+s /neurodocker
 ENTRYPOINT ["/neurodocker/startup.sh"]
 
-RUN apt-get update -qq && apt-get install -yq --no-install-recommends tree git-annex-standalone vim emacs-nox nano less ncdu tig git-annex-remote-rclone xvfb \
+RUN apt-get update -qq && apt-get install -yq --no-install-recommends tree git-annex-standalone vim emacs-nox nano less ncdu tig git-annex-remote-rclone \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # User-defined instruction
 RUN curl -sL https://deb.nodesource.com/setup_6.x | bash -
 
-RUN apt-get update -qq && apt-get install -yq --no-install-recommends nodejs \
+RUN apt-get update -qq && apt-get install -yq --no-install-recommends nodejs build-essential \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# User-defined instruction
+ENV LC_ALL=C.UTF-8
+
+# User-defined instruction
+RUN apt-get update && apt-get install -yq xvfb mesa-utils
 
 # Create new user: neuro
 RUN useradd --no-user-group --create-home --shell /bin/bash neuro
@@ -64,23 +70,38 @@ RUN echo "Downloading Miniconda installer ..." \
 #-------------------------
 # Create conda environment
 #-------------------------
-RUN conda create -y -q --name neuro python=3.5 \
-    	jupyter jupyterlab pandas matplotlib scikit-learn seaborn altair traitsui apptools configobj \
+RUN conda create -y -q --name neuro python=3.6 \
+    	jupyter jupyterlab pandas matplotlib scikit-learn seaborn altair traitsui apptools configobj reprozip reprounzip vtk \
     && conda clean -tipsy \
     && /bin/bash -c "source activate neuro \
     	&& pip install -q --no-cache-dir \
-    	nilearn datalad" \
+    	nilearn datalad mayavi" \
     && find /opt/conda -name ".wh*" -exec rm {} +
 ENV PATH=/opt/conda/envs/neuro/bin:$PATH
 
 # User-defined instruction
-RUN bash -c "source activate neuro && conda install -c menpo mayavi" 
+RUN bash -c "source activate neuro && pip install --pre --upgrade ipywidgets pythreejs " 
 
 # User-defined instruction
-RUN bash -c "source activate neuro && pip install --pre --upgrade ipywidgets ipyvolume " 
+RUN bash -c "source activate neuro && pip install  --upgrade https://github.com/maartenbreddels/ipyvolume/archive/master.zip && jupyter nbextension install --py --sys-prefix ipyvolume && jupyter nbextension enable --py --sys-prefix ipyvolume " 
 
 # User-defined instruction
-RUN bash -c "source activate neuro && pip install  --upgrade https://github.com/maartenbreddels/ipyvolume/archive/master.zip && jupyter nbextension install --py --symlink --user ipyvolume && jupyter nbextension enable ipyvolume --user --py" 
+RUN bash -c "source activate neuro && conda install jupyter_contrib_nbextensions " 
+
+# User-defined instruction
+RUN bash -c "source activate neuro && pip install --upgrade https://github.com/nipy/nibabel/archive/master.zip " 
+
+# User-defined instruction
+COPY cifti-data /cifti-data
+
+# User-defined instruction
+USER root
+
+# User-defined instruction
+RUN chmod -R a+r /cifti-data 
+
+# User-defined instruction
+USER neuro
 
 WORKDIR /home/neuro
 
