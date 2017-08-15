@@ -5,7 +5,7 @@
 # pull request on our GitHub repository:
 #     https://github.com/kaczmarj/neurodocker
 #
-# Timestamp: 2017-08-14 20:18:30
+# Timestamp: 2017-08-15 21:10:19
 
 FROM neurodebian:stretch-non-free
 
@@ -83,7 +83,7 @@ ENV PATH=/opt/conda/envs/neuro/bin:$PATH
 RUN bash -c "source activate neuro && pip install --pre --upgrade ipywidgets pythreejs " 
 
 # User-defined instruction
-RUN bash -c "source activate neuro && pip install  --upgrade https://github.com/maartenbreddels/ipyvolume/archive/master.zip && jupyter nbextension install --py --sys-prefix ipyvolume && jupyter nbextension enable --py --sys-prefix ipyvolume " 
+RUN bash -c "source activate neuro && pip install  --upgrade https://github.com/maartenbreddels/ipyvolume/archive/23eb91685dfcf200ee82f89ab6f7294f9214db8c.zip && jupyter nbextension install --py --sys-prefix ipyvolume && jupyter nbextension enable --py --sys-prefix ipyvolume " 
 
 # User-defined instruction
 RUN bash -c "source activate neuro && conda install jupyter_contrib_nbextensions " 
@@ -102,6 +102,9 @@ RUN chmod -R a+r /cifti-data
 
 # User-defined instruction
 USER neuro
+
+# User-defined instruction
+RUN bash -c "source activate neuro && jupyter nbextension enable rubberband/main && jupyter nbextension enable exercise2/main && jupyter nbextension enable spellchecker/main && conda install bokeh scikit-image " 
 
 WORKDIR /home/neuro
 
